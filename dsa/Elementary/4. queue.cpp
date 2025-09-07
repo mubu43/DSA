@@ -1,6 +1,19 @@
 #include <iostream>
 #include <stdexcept>
 
+/*
+ * Queue Implementation using Linked List
+ * 
+ * Structure: front_ -> [Node1] -> [Node2] -> [Node3] -> nullptr
+ *                                              ^
+ *                                            rear_
+ * 
+ * - Elements are added at the REAR (enqueue)
+ * - Elements are removed from the FRONT (dequeue)
+ * - Each node's 'next' pointer points toward the rear of the queue
+ * - When enqueuing: rear_->next = newNode, then rear_ = newNode
+ *   This maintains the linked list chain and adds new elements at the end
+ */
 template <typename T>
 class Queue {
 private:
@@ -22,13 +35,17 @@ public:
         }
     }
 
+    // Adds an element to the end of the queue
     void enqueue(const T& value) {
         Node* newNode = new Node(value);
         if (rear_) {
+            // If the queue is not empty, link the new node after the current rear
             rear_->next = newNode;
         } else {
+            // If the queue is empty, set front_ to the new node
             front_ = newNode;
         }
+        // Update rear_ to point to the new node
         rear_ = newNode;
         ++size_;
     }
