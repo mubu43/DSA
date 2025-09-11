@@ -5,7 +5,10 @@ struct Node {
     int data;       // Data stored in the node
     Node* next;     // Pointer to the next node
 
-    Node(int val) : data(val), next(nullptr) {}
+    Node(int val) {
+        data = val;
+        next = nullptr;
+    }
 };
 
 // Singly Linked List class
@@ -15,7 +18,9 @@ private:
 
 public:
     // Constructor
-    LinkedList() : head(nullptr) {}
+    LinkedList() {
+        head = nullptr;
+    }
 
     // Destructor to free memory
     ~LinkedList() {

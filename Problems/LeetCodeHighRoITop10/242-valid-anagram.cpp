@@ -1,13 +1,22 @@
 /*
  * LeetCode #242: Valid Anagram
  * Difficulty: Easy
- * 
- * Problem: Given two strings s and t, return true if t is an anagram of s, and false otherwise.
- * An Anagram is a word or phrase formed by rearranging the letters of a different word or phrase,
- * typically using all the original letters exactly once.
- * 
- * Time Complexity: O(n)
- * Space Complexity: O(1) for character array, O(k) for hash map where k is unique characters
+ *
+ * Problem Statement:
+ * Given two strings s and t, determine if t is an anagram of s.
+ * An anagram is a word or phrase formed by rearranging the letters of another,
+ * using all the original letters exactly once. Both strings may contain only lowercase English letters.
+ *
+ * For example:
+ *   - s = "anagram", t = "nagaram" => true (t is an anagram of s)
+ *   - s = "rat", t = "car" => false (t is not an anagram of s)
+ *
+ * Return true if t is an anagram of s, and false otherwise.
+ *
+ *
+ * Time Complexity: O(n), where n is the length of the strings.
+ * Space Complexity: O(1) when using a fixed-size character array (for lowercase letters),
+ *                   O(k) when using a hash map, where k is the number of unique characters.
  */
 
 #include <string>

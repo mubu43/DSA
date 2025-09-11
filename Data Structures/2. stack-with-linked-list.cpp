@@ -6,14 +6,20 @@ private:
         int data;
         Node* next;
         
-        Node(int value) : data(value), next(nullptr) {}
+        Node(int value) {
+            data = value;
+            next = nullptr;
+        }
     };
     
     Node* head;
     size_t count;
 
 public:
-    Stack() : head(nullptr), count(0) {}
+    Stack() {
+        head = nullptr;
+        count = 0;
+    }
     
     ~Stack() {
         while (!empty()) {

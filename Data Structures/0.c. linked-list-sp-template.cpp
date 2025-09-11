@@ -8,7 +8,10 @@ struct Node {
     T data;
     std::unique_ptr<Node<T>> next;
 
-    Node(const T& val) : data(val), next(nullptr) {}
+    Node(const T& val) {
+        data = val;
+        next = nullptr;
+    }
 };
 
 // Singly Linked List class (templated)
@@ -18,7 +21,9 @@ private:
     std::unique_ptr<Node<T>> head;
 
 public:
-    LinkedList() : head(nullptr) {}
+    LinkedList() {
+        head = nullptr;
+    }
 
     void append(const T& value) {
         auto newNode = std::make_unique<Node<T>>(value);

@@ -65,7 +65,9 @@ class UnionFind {
      std::vector<int> parent; // parent[i] points to the parent of node i in the disjoint set forest
      std::vector<int> rank;   // rank[i] is the depth of the tree rooted at i (used for union by rank)
 public:
-     UnionFind(int n) : parent(n), rank(n, 0) {
+     UnionFind(int n) {
+          parent.resize(n);
+          rank.resize(n, 0);
           // Initially, each node is its own parent (self root)
           for (int i = 0; i < n; ++i) parent[i] = i;
      }

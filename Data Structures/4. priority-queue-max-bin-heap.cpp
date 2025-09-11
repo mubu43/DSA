@@ -331,7 +331,10 @@ int main() {
         int priority;
         std::string name;
         
-        Task(int p, const std::string& n) : priority(p), name(n) {}
+        Task(int p, const std::string& n) {
+            priority = p;
+            name = n;
+        }
         
         // Comparison operator for priority (higher number = higher priority)
         bool operator>(const Task& other) const {

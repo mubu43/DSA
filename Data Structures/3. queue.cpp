@@ -20,14 +20,21 @@ private:
     struct Node {
         T data;
         Node* next;
-        Node(const T& val) : data(val), next(nullptr) {}
+        Node(const T& val) {
+            data = val;
+            next = nullptr;
+        }
     };
     Node* front_;
     Node* rear_;
     size_t size_;
 
 public:
-    Queue() : front_(nullptr), rear_(nullptr), size_(0) {}
+    Queue() {
+        front_ = nullptr;
+        rear_ = nullptr;
+        size_ = 0;
+    }
 
     ~Queue() {
         while (!empty()) {

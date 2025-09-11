@@ -21,7 +21,9 @@ private:
     std::mt19937 gen;          // Mersenne Twister random number engine
     
 public:
-    ImprovedQuickSort() : gen(rd()) {}
+    ImprovedQuickSort() {
+        gen.seed(rd());
+    }
     
     /*
      * FISHER-YATES SHUFFLE ALGORITHM

@@ -1,12 +1,25 @@
 /*
  * LeetCode #94: Binary Tree Inorder Traversal
  * Difficulty: Easy
- * 
- * Problem: Given the root of a binary tree, return the inorder traversal of its nodes' values.
- * Inorder traversal: Left -> Root -> Right
- * 
- * Time Complexity: O(n)
- * Space Complexity: O(h) for recursive, O(n) for iterative
+ *
+ * Problem Statement:
+ * Given the root of a binary tree, return the inorder traversal of its nodes' values as a vector.
+ * Inorder traversal means visiting the left subtree first, then the root node, and finally the right subtree.
+ *
+ * For example, given the following binary tree:
+ *     1
+ *      \
+ *       2
+ *      /
+ *     3
+ * The inorder traversal should return [1, 3, 2].
+ *
+ * Constraints:
+ * - The number of nodes in the tree is in the range [0, 100].
+ * - -100 <= Node.val <= 100
+ *
+ * Time Complexity: O(n), where n is the number of nodes in the tree.
+ * Space Complexity: O(h) for the recursive approach (h = tree height), O(n) for the iterative approach.
  */
 
 #include <vector>

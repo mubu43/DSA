@@ -30,7 +30,9 @@ private:
     std::mt19937 gen;
     
 public:
-    DijkstraQuickSort() : gen(rd()) {}
+    DijkstraQuickSort() {
+        gen.seed(rd());
+    }
     
     /*
      * FISHER-YATES SHUFFLE

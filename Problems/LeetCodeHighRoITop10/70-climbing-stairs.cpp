@@ -1,11 +1,19 @@
 /*
  * LeetCode #70: Climbing Stairs
  * Difficulty: Easy
- * 
- * Problem: You are climbing a staircase. It takes n steps to reach the top.
- * Each time you can either climb 1 or 2 steps. In how many distinct ways 
- * can you climb to the top?
- * 
+ *
+ * Problem Statement:
+ * You are given a staircase with n steps. Each time you can climb either 1 step or 2 steps.
+ * Your goal is to determine in how many distinct ways you can reach the top of the staircase,
+ * starting from the bottom (step 0). For example, if n = 3, you can reach the top in 3 ways:
+ *   1. 1 step + 1 step + 1 step
+ *   2. 1 step + 2 steps
+ *   3. 2 steps + 1 step
+ * Return the total number of distinct ways to climb to the top.
+ *
+ * Constraints:
+ * - 1 <= n <= 45
+ *
  * Time Complexity: O(n)
  * Space Complexity: O(1) for optimized version
  */

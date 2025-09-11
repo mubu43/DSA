@@ -6,7 +6,10 @@ struct Node {
     int data;
     std::unique_ptr<Node> next;
 
-    Node(int val) : data(val), next(nullptr) {}
+    Node(int val) {
+        data = val;
+        next = nullptr;
+    }
 };
 
 // Singly Linked List class
@@ -15,7 +18,9 @@ private:
     std::unique_ptr<Node> head;
 
 public:
-    LinkedList() : head(nullptr) {}
+    LinkedList() {
+        head = nullptr;
+    }
 
     // No need for a custom destructor; unique_ptr handles cleanup
 

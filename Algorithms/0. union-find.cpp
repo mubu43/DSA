@@ -28,7 +28,9 @@ class UnionFind {
     std::vector<int> rank;
 public:
     // Constructor. Initializes n disjoint sets, each element is its own parent.
-    UnionFind(int n) : parent(n), rank(n, 0) {
+    UnionFind(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
         for(int i = 0; i < n; ++i) parent[i] = i;
     }
 

@@ -1,12 +1,33 @@
 /*
  * LeetCode #226: Invert Binary Tree
  * Difficulty: Easy
- * 
- * Problem: Given the root of a binary tree, invert the tree, and return its root.
- * Inverting means swapping the left and right children of all nodes.
- * 
- * Time Complexity: O(n)
- * Space Complexity: O(h) for recursive, O(n) for iterative
+ *
+ * Problem Statement:
+ * Given the root of a binary tree, invert the tree and return its root.
+ * Inverting a binary tree means that for every node in the tree, 
+ * its left and right children are swapped recursively.
+ *
+ * For example, given the following binary tree:
+ *     4
+ *    / \
+ *   2   7
+ *  / \ / \
+ * 1  3 6  9
+ *
+ * The inverted tree should be:
+ *     4
+ *    / \
+ *   7   2
+ *  / \ / \
+ * 9  6 3  1
+ *
+ * Constraints:
+ * - The number of nodes in the tree is in the range [0, 100].
+ * - -100 <= Node.val <= 100
+ *
+ * Time Complexity: O(n), where n is the number of nodes in the tree.
+ * Space Complexity: O(h) for the recursive approach, where h is the height of the tree.
+ *                  O(n) for the iterative approaches using queue or stack.
  */
 
 #include <queue>
