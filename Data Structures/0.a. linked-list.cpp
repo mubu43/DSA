@@ -52,6 +52,40 @@ public:
         head = newNode;
     }
 
+    // Insert a new node at a specific index (0-based)
+    void insertAt(int index, int value) {
+        // If index is 0, insert at the beginning
+        if (index == 0) {
+            prepend(value);
+            return;
+        }
+
+        // Check for negative index
+        if (index < 0) {
+            std::cout << "Error: Index cannot be negative" << std::endl;
+            return;
+        }
+
+        Node* newNode = new Node(value);
+        Node* current = head;
+        
+        // Traverse to the position just before the desired index
+        for (int i = 0; i < index - 1 && current != nullptr; i++) {
+            current = current->next;
+        }
+        
+        // If current is null, index is out of bounds
+        if (current == nullptr) {
+            std::cout << "Error: Index " << index << " is out of bounds" << std::endl;
+            delete newNode; // Clean up allocated memory
+            return;
+        }
+        
+        // Insert the new node
+        newNode->next = current->next;
+        current->next = newNode;
+    }
+
     // Delete the first node with the given value
     void remove(int value) {
         if (!head) return;
@@ -94,8 +128,22 @@ int main() {
     list.prepend(5);
     list.print(); // Output: 5 -> 10 -> 20
 
+    // Insert at specific indices
+    list.insertAt(1, 15); // Insert 15 at index 1
+    list.print(); // Output: 5 -> 15 -> 10 -> 20
+    
+    list.insertAt(0, 1); // Insert 1 at beginning (index 0)
+    list.print(); // Output: 1 -> 5 -> 15 -> 10 -> 20
+    
+    list.insertAt(5, 25); // Insert 25 at end (index 5)
+    list.print(); // Output: 1 -> 5 -> 15 -> 10 -> 20 -> 25
+
+    // Test error cases
+    list.insertAt(-1, 100); // Should show error message
+    list.insertAt(10, 200); // Should show error message (out of bounds)
+
     list.remove(10);
-    list.print(); // Output: 5 -> 20
+    list.print(); // Output: 1 -> 5 -> 15 -> 20 -> 25
 
     return 0;
 }
