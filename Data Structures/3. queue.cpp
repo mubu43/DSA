@@ -15,12 +15,15 @@
  *   This maintains the linked list chain and adds new elements at the end
  */
 template <typename T>
-class Queue {
+class Queue
+{
 private:
-    struct Node {
+    struct Node
+    {
         T data;
         Node* next;
-        Node(const T& val) {
+        Node(const T& val)
+        {
             data = val;
             next = nullptr;
         }
@@ -30,25 +33,32 @@ private:
     size_t size_;
 
 public:
-    Queue() {
+    Queue()
+    {
         front_ = nullptr;
         rear_ = nullptr;
         size_ = 0;
     }
 
-    ~Queue() {
-        while (!empty()) {
+    ~Queue()
+    {
+        while (!empty())
+        {
             dequeue();
         }
     }
 
     // Adds an element to the end of the queue
-    void enqueue(const T& value) {
+    void enqueue(const T& value)
+    {
         Node* newNode = new Node(value);
-        if (rear_) {
+        if (rear_)
+        {
             // If the queue is not empty, link the new node after the current rear
             rear_->next = newNode;
-        } else {
+        }
+        else
+        {
             // If the queue is empty, set front_ to the new node
             front_ = newNode;
         }
@@ -57,7 +67,8 @@ public:
         ++size_;
     }
 
-    void dequeue() {
+    void dequeue()
+    {
         if (empty()) throw std::out_of_range("Queue is empty");
         Node* temp = front_;
         front_ = front_->next;
@@ -66,28 +77,33 @@ public:
         --size_;
     }
 
-    T& front() {
+    T& front()
+    {
         if (empty()) throw std::out_of_range("Queue is empty");
         return front_->data;
     }
 
-    bool empty() const {
+    bool empty() const
+    {
         return size_ == 0;
     }
 
-    size_t size() const {
+    size_t size() const
+    {
         return size_;
     }
 };
 
 // Example usage
-int main() {
+int main()
+{
     Queue<int> q;
     q.enqueue(10);
     q.enqueue(20);
     q.enqueue(30);
 
-    while (!q.empty()) {
+    while (!q.empty())
+    {
         std::cout << q.front() << " ";
         q.dequeue();
     }

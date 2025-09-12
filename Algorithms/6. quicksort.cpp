@@ -3,13 +3,16 @@
 
 // Partition function: places the pivot element at its correct position
 // and arranges smaller elements to the left and greater to the right.
-int partition(std::vector<int>& arr, int low, int high) {
+int partition(std::vector<int>& arr, int low, int high)
+{
     int pivot = arr[high]; // Choosing the last element as pivot
     int i = low - 1; // Index of smaller element
 
-    for (int j = low; j < high; ++j) {
+    for (int j = low; j < high; ++j)
+    {
         // If current element is less than or equal to pivot
-        if (arr[j] <= pivot) {
+        if (arr[j] <= pivot)
+        {
             ++i;
             std::swap(arr[i], arr[j]); // Swap arr[i] and arr[j]
         }
@@ -19,8 +22,10 @@ int partition(std::vector<int>& arr, int low, int high) {
 }
 
 // QuickSort function: recursively sorts elements before and after partition
-void quickSort(std::vector<int>& arr, int low, int high) {
-    if (low < high) {
+void quickSort(std::vector<int>& arr, int low, int high)
+{
+    if (low < high)
+    {
         // Partition the array and get the pivot index
         int pi = partition(arr, low, high);
 
@@ -30,18 +35,25 @@ void quickSort(std::vector<int>& arr, int low, int high) {
     }
 }
 
-int main() {
+int main()
+{
     std::vector<int> arr = {10, 7, 8, 9, 1, 5};
     int n = arr.size();
 
     std::cout << "Original array: ";
-    for (int x : arr) std::cout << x << " ";
+    for (int x : arr)
+    {
+        std::cout << x << " ";
+    }
     std::cout << std::endl;
 
     quickSort(arr, 0, n - 1);
 
     std::cout << "Sorted array:   ";
-    for (int x : arr) std::cout << x << " ";
+    for (int x : arr)
+    {
+        std::cout << x << " ";
+    }
     std::cout << std::endl;
 
     return 0;

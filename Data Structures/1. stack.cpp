@@ -1,42 +1,55 @@
 #include <iostream>
 #include <vector>
 
-class Stack {
+class Stack
+{
 private:
     std::vector<int> data;
 
 public:
-    void push(int value) {
+    void push(int value)
+    {
         data.push_back(value);
     }
 
-    void pop() {
-        if (!data.empty()) {
+    void pop()
+    {
+        if (!data.empty())
+        {
             data.pop_back();
-        } else {
+        }
+        else
+        {
             std::cout << "Stack underflow\n";
         }
     }
 
-    int top() const {
-        if (!data.empty()) {
+    int top() const
+    {
+        if (!data.empty())
+        {
             return data.back();
-        } else {
+        }
+        else
+        {
             std::cout << "Stack is empty\n";
             return -1; // or throw exception
         }
     }
 
-    bool empty() const {
+    bool empty() const
+    {
         return data.empty();
     }
 
-    size_t size() const {
+    size_t size() const
+    {
         return data.size();
     }
 };
 
-int main() {
+int main()
+{
     Stack s;
     s.push(10);
     s.push(20);
@@ -46,7 +59,8 @@ int main() {
     s.pop();
     std::cout << "Top element after pop: " << s.top() << std::endl;
 
-    while (!s.empty()) {
+    while (!s.empty())
+    {
         std::cout << "Popping: " << s.top() << std::endl;
         s.pop();
     }

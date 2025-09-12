@@ -24,28 +24,32 @@
  * - Maintains O(n log n) performance for arrays with unique elements
  */
 
-class DijkstraQuickSort {
+class DijkstraQuickSort
+{
 private:
     std::random_device rd;
     std::mt19937 gen;
-    
+
 public:
-    DijkstraQuickSort() {
+    DijkstraQuickSort()
+    {
         gen.seed(rd());
     }
-    
+
     /*
      * FISHER-YATES SHUFFLE
      * Same randomization as before to prevent worst-case scenarios
      */
-    void randomShuffle(std::vector<int>& arr) {
-        for (int i = arr.size() - 1; i > 0; --i) {
+    void randomShuffle(std::vector<int>& arr)
+    {
+        for (int i = arr.size() - 1; i > 0; --i)
+        {
             std::uniform_int_distribution<> dis(0, i);
             int j = dis(gen);
             std::swap(arr[i], arr[j]);
         }
     }
-    
+
     /*
      * DIJKSTRA'S 3-WAY PARTITIONING (Dutch National Flag Algorithm)
      * 
@@ -68,40 +72,45 @@ public:
      * 
      * RETURNS: pair<int, int> representing [lt, gt] boundaries
      */
-    std::pair<int, int> partition3Way(std::vector<int>& arr, int low, int high) {
+    std::pair<int, int> partition3Way(std::vector<int>& arr, int low, int high)
+    {
         // Choose pivot (can be improved with median-of-three)
         int pivot = arr[low];
-        
+
         int lt = low;      // arr[low...lt-1] < pivot
         int gt = high;     // arr[gt+1...high] > pivot
         int i = low + 1;   // current element to examine
-        
+
         /*
          * CORE ALGORITHM:
          * Process each element and place it in correct region
          */
-        while (i <= gt) {
-            if (arr[i] < pivot) {
+        while (i <= gt)
+        {
+            if (arr[i] < pivot)
+            {
                 // Element belongs in < region
                 std::swap(arr[lt], arr[i]);
                 lt++;  // expand < region
                 i++;   // move to next element
             }
-            else if (arr[i] > pivot) {
+            else if (arr[i] > pivot)
+            {
                 // Element belongs in > region
                 std::swap(arr[i], arr[gt]);
                 gt--;  // expand > region
                 // Don't increment i - need to examine swapped element
             }
-            else {
+            else
+            {
                 // arr[i] == pivot, already in correct region
                 i++;   // just move to next element
             }
         }
-        
+
         return {lt, gt};
     }
-    
+
     /*
      * ENHANCED RECURSIVE QUICKSORT WITH 3-WAY PARTITIONING
      * 
@@ -114,52 +123,60 @@ public:
      * PERFORMANCE BENEFIT:
      * Equal elements are completely excluded from further recursive calls
      */
-    void quickSort3Way(std::vector<int>& arr, int low, int high) {
+    void quickSort3Way(std::vector<int>& arr, int low, int high)
+    {
         if (low >= high) return;
-        
+
         // Partition into three regions
         auto [lt, gt] = partition3Way(arr, low, high);
-        
+
         // Recursively sort only < and > regions
         // Elements in [lt...gt] are equal to pivot and already in correct position
         quickSort3Way(arr, low, lt - 1);    // Sort < pivot region
         quickSort3Way(arr, gt + 1, high);   // Sort > pivot region
-        
+
         // Note: No recursive call for [lt...gt] - major efficiency gain!
     }
-    
+
     /*
      * PUBLIC SORTING INTERFACE
      */
-    void sort(std::vector<int>& arr) {
+    void sort(std::vector<int>& arr)
+    {
         if (arr.size() <= 1) return;
-        
+
         // Apply randomization to prevent worst-case scenarios
         randomShuffle(arr);
-        
+
         // Use 3-way partitioning quicksort
         quickSort3Way(arr, 0, arr.size() - 1);
     }
 };
 
 // Utility functions for demonstration
-void printArray(const std::vector<int>& arr, const std::string& label) {
+void printArray(const std::vector<int>& arr, const std::string& label)
+{
     std::cout << label << ": ";
-    for (int num : arr) {
+    for (int num : arr)
+    {
         std::cout << num << " ";
     }
     std::cout << std::endl;
 }
 
-void printPartitionAnalysis(const std::vector<int>& arr) {
+void printPartitionAnalysis(const std::vector<int>& arr)
+{
     std::map<int, int> frequency;
-    for (int num : arr) {
+    for (int num : arr)
+    {
         frequency[num]++;
     }
-    
+
     std::cout << "Duplicate analysis: ";
-    for (const auto& [value, count] : frequency) {
-        if (count > 1) {
+    for (const auto& [value, count] : frequency)
+    {
+        if (count > 1)
+        {
             std::cout << value << "(" << count << "x) ";
         }
     }
@@ -170,15 +187,16 @@ void printPartitionAnalysis(const std::vector<int>& arr) {
  * DEMONSTRATION PROGRAM
  * Shows the superiority of 3-way partitioning on duplicate-heavy arrays
  */
-int main() {
+int main()
+{
     DijkstraQuickSort sorter;
-    
+
     std::cout << "=== DIJKSTRA'S 3-WAY PARTITIONING QUICKSORT DEMO ===\n\n";
-    
+
     // Test Case 1: Array with many duplicates (worst case for 2-way partition)
     std::vector<int> duplicateHeavy = {5, 2, 5, 5, 1, 2, 5, 2, 5, 1, 5, 2, 1, 5, 2, 5, 1, 5, 2, 5};
     std::vector<int> testArray1 = duplicateHeavy;
-    
+
     std::cout << "=== Test 1: Heavy Duplicates (20 elements) ===\n";
     printArray(testArray1, "Before sorting");
     printPartitionAnalysis(testArray1);
@@ -187,22 +205,22 @@ int main() {
     sorter.sort(testArray1);
     printArray(testArray1, "After 3-way sorting");
     std::cout << "✓ Efficiently handled duplicate-heavy array\n\n";
-    
+
     // Test Case 2: Array with few unique values
     std::vector<int> fewUnique = {3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1};
     std::vector<int> testArray2 = fewUnique;
-    
+
     std::cout << "=== Test 2: Few Unique Values ===\n";
     printArray(testArray2, "Before sorting");
     printPartitionAnalysis(testArray2);
     sorter.sort(testArray2);
     printArray(testArray2, "After 3-way sorting");
     std::cout << "✓ Optimal performance with only 3 unique values\n\n";
-    
+
     // Test Case 3: All elements the same (extreme case)
     std::vector<int> allSame = {7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7};
     std::vector<int> testArray3 = allSame;
-    
+
     std::cout << "=== Test 3: All Elements Identical ===\n";
     printArray(testArray3, "Before sorting");
     std::cout << "Issue: 2-way partition would still recurse on identical elements\n";
@@ -210,19 +228,19 @@ int main() {
     sorter.sort(testArray3);
     printArray(testArray3, "After 3-way sorting");
     std::cout << "✓ O(n) performance - no unnecessary recursion\n\n";
-    
+
     // Test Case 4: Mixed array (showing it works well for unique elements too)
     std::vector<int> mixed = {15, 3, 9, 14, 7, 1, 12, 8, 18, 5, 20, 2, 11, 6, 17, 4, 13, 10, 19, 16};
     std::vector<int> testArray4 = mixed;
-    
+
     std::cout << "=== Test 4: Mostly Unique Elements ===\n";
     printArray(testArray4, "Before sorting");
     sorter.sort(testArray4);
     printArray(testArray4, "After 3-way sorting");
     std::cout << "✓ Standard O(n log n) performance maintained\n\n";
-    
+
     std::cout << "=== ALL TESTS COMPLETED SUCCESSFULLY! ===\n";
-    
+
     return 0;
 }
 

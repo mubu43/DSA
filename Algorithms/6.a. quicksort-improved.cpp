@@ -15,16 +15,18 @@
  * - Median-of-three pivot selection for better partitioning
  */
 
-class ImprovedQuickSort {
+class ImprovedQuickSort
+{
 private:
     std::random_device rd;      // Hardware-based random number generator
     std::mt19937 gen;          // Mersenne Twister random number engine
-    
+
 public:
-    ImprovedQuickSort() {
+    ImprovedQuickSort()
+    {
         gen.seed(rd());
     }
-    
+
     /*
      * FISHER-YATES SHUFFLE ALGORITHM
      * Purpose: Randomize array order to prevent worst-case performance
@@ -41,14 +43,16 @@ public:
      * Why this helps: Transforms any input (sorted, reverse-sorted, etc.)
      * into a random permutation, ensuring average-case performance
      */
-    void randomShuffle(std::vector<int>& arr) {
-        for (int i = arr.size() - 1; i > 0; --i) {
+    void randomShuffle(std::vector<int>& arr)
+    {
+        for (int i = arr.size() - 1; i > 0; --i)
+        {
             std::uniform_int_distribution<> dis(0, i);
             int j = dis(gen);
             std::swap(arr[i], arr[j]);
         }
     }
-    
+
     /*
      * MEDIAN-OF-THREE PIVOT SELECTION
      * Purpose: Choose a better pivot to create more balanced partitions
@@ -64,23 +68,30 @@ public:
      * - Creates more balanced partitions on average
      * - Performs well on partially sorted data
      */
-    int medianOfThree(std::vector<int>& arr, int low, int high) {
+    int medianOfThree(std::vector<int>& arr, int low, int high)
+    {
         int mid = low + (high - low) / 2;
-        
+
         // Sort the three elements: arr[low], arr[mid], arr[high]
-        if (arr[mid] < arr[low]) 
+        if (arr[mid] < arr[low])
+        {
             std::swap(arr[low], arr[mid]);
-        if (arr[high] < arr[low]) 
+        }
+        if (arr[high] < arr[low])
+        {
             std::swap(arr[low], arr[high]);
-        if (arr[high] < arr[mid]) 
+        }
+        if (arr[high] < arr[mid])
+        {
             std::swap(arr[mid], arr[high]);
-        
+        }
+
         // Now: arr[low] <= arr[mid] <= arr[high]
         // Place median (arr[mid]) at the end for partitioning
         std::swap(arr[mid], arr[high]);
         return arr[high];
     }
-    
+
     /*
      * LOMUTO PARTITION SCHEME
      * Purpose: Rearrange array so elements <= pivot are on left, > pivot on right
@@ -93,26 +104,29 @@ public:
      * 
      * Returns: Final position of pivot (partition index)
      */
-    int partition(std::vector<int>& arr, int low, int high) {
+    int partition(std::vector<int>& arr, int low, int high)
+    {
         // Use median-of-three for better pivot selection
         int pivot = medianOfThree(arr, low, high);
-        
+
         int i = low - 1; // Index of last element <= pivot
-        
+
         // Scan through array, maintaining invariant:
         // arr[low...i] <= pivot, arr[i+1...j-1] > pivot
-        for (int j = low; j < high; ++j) {
-            if (arr[j] <= pivot) {
+        for (int j = low; j < high; ++j)
+        {
+            if (arr[j] <= pivot)
+            {
                 ++i;
                 std::swap(arr[i], arr[j]);
             }
         }
-        
+
         // Place pivot in its correct position
         std::swap(arr[i + 1], arr[high]);
         return i + 1; // Return pivot's final position
     }
-    
+
     /*
      * RECURSIVE QUICKSORT FUNCTION
      * Purpose: Divide-and-conquer sorting algorithm
@@ -125,17 +139,19 @@ public:
      * 
      * The pivot is already in its correct position after partitioning
      */
-    void quickSort(std::vector<int>& arr, int low, int high) {
-        if (low < high) {
+    void quickSort(std::vector<int>& arr, int low, int high)
+    {
+        if (low < high)
+        {
             // Partition and get pivot index
             int pivotIndex = partition(arr, low, high);
-            
+
             // Recursively sort elements before and after partition
             quickSort(arr, low, pivotIndex - 1);      // Sort left subarray
             quickSort(arr, pivotIndex + 1, high);     // Sort right subarray
         }
     }
-    
+
     /*
      * MAIN SORTING FUNCTION
      * Purpose: Public interface that applies all improvements
@@ -145,21 +161,27 @@ public:
      * 2. Apply randomization to prevent worst-case scenarios
      * 3. Call recursive quicksort with improved partitioning
      */
-    void sort(std::vector<int>& arr) {
-        if (arr.size() <= 1) return;
-        
+    void sort(std::vector<int>& arr)
+    {
+        if (arr.size() <= 1)
+        {
+            return;
+        }
+
         // IMPROVEMENT 1: Randomize to avoid worst-case on sorted data
         randomShuffle(arr);
-        
+
         // IMPROVEMENT 2: Use enhanced quicksort with median-of-three
         quickSort(arr, 0, arr.size() - 1);
     }
 };
 
 // Utility function to print array contents
-void printArray(const std::vector<int>& arr, const std::string& label) {
+void printArray(const std::vector<int>& arr, const std::string& label)
+{
     std::cout << label << ": ";
-    for (int num : arr) {
+    for (int num : arr)
+    {
         std::cout << num << " ";
     }
     std::cout << std::endl;
@@ -173,52 +195,53 @@ void printArray(const std::vector<int>& arr, const std::string& label) {
  * 3. Random array
  * 4. Array with duplicate elements
  */
-int main() {
+int main()
+{
     ImprovedQuickSort sorter;
-    
+
     // Test Case 1: Already sorted array (20 elements)
     // This would cause O(n²) performance in basic quicksort
     std::vector<int> sortedArray = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
     std::vector<int> testArray1 = sortedArray;
-    
+
     std::cout << "=== Test 1: Already Sorted Array ===\n";
     printArray(testArray1, "Before sorting");
     sorter.sort(testArray1);
     printArray(testArray1, "After sorting");
     std::cout << "✓ Handled sorted input efficiently\n\n";
-    
+
     // Test Case 2: Reverse sorted array
     std::vector<int> reverseArray = {20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
     std::vector<int> testArray2 = reverseArray;
-    
+
     std::cout << "=== Test 2: Reverse Sorted Array ===\n";
     printArray(testArray2, "Before sorting");
     sorter.sort(testArray2);
     printArray(testArray2, "After sorting");
     std::cout << "✓ Handled reverse-sorted input efficiently\n\n";
-    
+
     // Test Case 3: Random array
     std::vector<int> randomArray = {15, 3, 9, 14, 7, 1, 12, 8, 18, 5, 20, 2, 11, 6, 17, 4, 13, 10, 19, 16};
     std::vector<int> testArray3 = randomArray;
-    
+
     std::cout << "=== Test 3: Random Array ===\n";
     printArray(testArray3, "Before sorting");
     sorter.sort(testArray3);
     printArray(testArray3, "After sorting");
     std::cout << "✓ Standard quicksort performance on random data\n\n";
-    
+
     // Test Case 4: Array with many duplicates
     std::vector<int> duplicateArray = {5, 2, 8, 5, 1, 9, 2, 7, 5, 3, 8, 1, 6, 9, 2, 4, 7, 5, 8, 3};
     std::vector<int> testArray4 = duplicateArray;
-    
+
     std::cout << "=== Test 4: Array with Duplicates ===\n";
     printArray(testArray4, "Before sorting");
     sorter.sort(testArray4);
     printArray(testArray4, "After sorting");
     std::cout << "✓ Handled duplicate elements correctly\n\n";
-    
+
     std::cout << "=== All Tests Completed Successfully! ===\n";
-    
+
     return 0;
 }
 

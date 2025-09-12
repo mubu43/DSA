@@ -2,15 +2,19 @@
 #include <vector>
 
 // Shell Sort with initial gap h=4
-void shellSort(std::vector<int>& arr) {
+void shellSort(std::vector<int>& arr)
+{
     int n = arr.size();
     // Start with gap h=4, then reduce by half each time
-    for (int gap = 4; gap > 0; gap /= 2) {
+    for (int gap = 4; gap > 0; gap /= 2)
+    {
         // Perform gapped insertion sort for this gap size
-        for (int i = gap; i < n; ++i) {
+        for (int i = gap; i < n; ++i)
+        {
             int temp = arr[i];
             int j;
-            for (j = i; j >= gap && arr[j - gap] > temp; j -= gap) {
+            for (j = i; j >= gap && arr[j - gap] > temp; j -= gap)
+            {
                 arr[j] = arr[j - gap];
             }
             arr[j] = temp;
@@ -18,17 +22,24 @@ void shellSort(std::vector<int>& arr) {
     }
 }
 
-int main() {
+int main()
+{
     std::vector<int> arr = {23, 12, 1, 8, 34, 54, 2, 3, 99, 17, 45, 67, 89, 21, 4, 6, 10, 5, 77, 32};
 
     std::cout << "Original array:\n";
-    for (int num : arr) std::cout << num << " ";
+    for (int num : arr)
+    {
+        std::cout << num << " ";
+    }
     std::cout << "\n";
 
     shellSort(arr);
 
     std::cout << "Sorted array:\n";
-    for (int num : arr) std::cout << num << " ";
+    for (int num : arr)
+    {
+        std::cout << num << " ";
+    }
     std::cout << "\n";
 
     return 0;
