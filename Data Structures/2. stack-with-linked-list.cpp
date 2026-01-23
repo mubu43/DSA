@@ -27,6 +27,7 @@ public:
         }
     }
 
+    // LL based stack push operation is an LL prepend operation
     void push(int value) {
         Node* newNode = new Node(value);
         newNode->next = head;
@@ -34,6 +35,7 @@ public:
         count++;
     }
 
+    // set head to head->next and then delete old head
     void pop() {
         if (!empty()) {
             Node* temp = head;
