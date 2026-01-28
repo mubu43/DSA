@@ -1,0 +1,117 @@
+Resource allocation, fairness, QoS
+===================================
+
+* Basic problem: internet only provides best effort service. It does
+  not guarantee any fair allocation of bandwidth or other
+  resources. As a result, no bandiwdth or delay guarantees. What can
+  you do to get more quality of service (QoS) guarantees from the
+  network? We will discuss two main ideas - traffic shaping and router
+  scheduling.
+
+* What is fairness? Two popular definitions: Jain fairness index and
+  max-min fairness.
+
+* Jain fairness index = [sum(xi)]^2 / n sum (xi^2). Equal to 1 if all
+  xi = 1. Equal to 1/n if only one xi=1 and rest 0. Measures extent of
+  fairness.
+
+* However, sometimes, some flows may not have enough traffic to send,
+  in which case they cannot get equal share of bandwidth. Suppose 2
+  FTP flows and 2 audio flows sharing a link of 1 Mbps. Audio call
+  generates 100 kbps each. In that case, it is not possible to
+  allocate 250 kbps of "fair share" to audio. What is fair allocation
+  here? Since audio need lesser than fair share, give them 100 kbps
+  each. Remaining 800 kbps is split between 2 FTP flows equally. This
+  notion of fairness is called "max-min" fairness. How to do a max-min
+  allocation? Start filling each flow until it hits its limit. Once a
+  flow's allocation has reached its limit, continue with the other
+  flows.
+
+* By QoS, we mean end-to-end bandwidth and delay
+  guarantees. Paricularly important for real time audio/video
+  applications. Multimedia applications can withstand a small amount
+  of delay by buffering incoming data and delaying playback by few
+  hundreds of milliseconds. However, they cannot delay playback by
+  much for interactivity. So such applications will work well if there
+  is some bound on end-to-end latency. Most applications have some
+  basic adaptability built into them (e.g., change resolution of video
+  stream or adjust playback buffer), so are able to survive on
+  Internet today even though no QoS mechanism is in place.
+
+* Several proposals have been put up for changing the internet
+  architecture to enable more fairness and QoS. These proposals
+  involve flows specifying their rate, reserving resources along the
+  path, and routers enforcing these specifications. None of these
+  proposals has seen any implementation, but a few ideas are
+  interesting.
+
+* Two main functionalities needed to implement fairness and QoS on the
+  Internet. (1) Traffic shaping: traffic from hosts should be
+  regulated as per a specific rate that can be handled by the
+  Internet. (2) Ruuter scheduling. Routers cannot simply use
+  first-in-first-out (FIFO) but must use more sophisticated algorithms
+  to guarantee fairness and QoS.
+
+* Now to do traffic shaping? The idea of a token bucket filter (TBF) -
+  used to specify traffic, as well as shape incoming traffic. Think of
+  a bucket in which tokens accumulate at rate "R". The bucket can hold
+  up to "B" tokens, called bucket depth. If no tokens accumulated,
+  flow can send at rate R. If tokens accumulated, it can send up to a
+  burst B. Optionally, the peak rate P can also be specified, so that
+  the burst B doesn't go at a very high rate.
+
+* For example, consider TBF with R = 1 packet/s. B = 20 packets. P = 5
+  packets/s. Then, if the flow doesn't have any traffic for a long
+  time, it can send at rate P for 4 seconds, after which all tokens in
+  bucket will be empty, and it can subsequently send at rate R.
+
+* TBF or other traffic shaping mechanisms must be used by source or by
+  routers to stick to a traffic spec, QoS needs to be
+  guaranteed. There is no way to guarantee service if all sources send
+  unlimited traffic.
+
+* Router scheuling high-level problem: several flows at a bottleneck
+  router. We will need to allocate the bottleneck bandwidth in a
+  max-min fair way between them. A flow can be a TCP flow or all
+  traffic between a source-destination pair or any thing else. We will
+  refer to the granularity at which fairness should be maintained as
+  "flow".
+
+* What are common router scheduling policies / queueing disciplines?
+
+- First come first serve (FCFS or FIFO). No guarantee whatsoever.
+
+- Priority queueing. When a flow of higher priority exists, send it
+  before flow of lower priority. May end up starving some flows. Not
+  really fair, but useful when you want to prioritize certain type of
+  traffic. 
+
+- Round robin (RR). Enqueue each flow separately. Send from each
+  flow's queue in round robin fashion. Simple. O(1)
+  complexity. Results in max-min fairness only if packet sizes are
+  equal, which is not always the case.
+
+- Fair queueing (FQ). In ideal world, we want to do bit-by-bit round
+  robin, so that max-min fairness is achieved even with variable
+  packet sizes. However, packet is the granularity of
+  transmission. The fair queueing algorithm tries to emulate
+  bit-by-bit round robin over entire packets. Most FQ algorithms are
+  O(log N) where N is number of "active" flows.
+
+- Weighted fair queueing (WFQ). It is possible to give priority to
+  flows. For example, we may want to send 1 bit of a flow for every
+  "w" bits of another flow. Then the second flow is said to have a
+  weight of "w". The WFQ algorithms lets us specify weights in this
+  manner. WFQ is also usually O(log N).
+
+- Deficit round robin (DRR) is an approximation to FQ. It is O(1) like
+  RR but tries to achieve FQ type allocation in the long run.
+
+* For bounded delay guarantees, traffic shaping using token bucket +
+  guaranteed bandwidth using appropriate scheduling like fair queueing
+  at every router can provide provably bounded delays. Why? Because
+  your queueing delay is only influenced by your own traffic in fair
+  queueing. So if your traffic is limited by token bucket, maximum
+  queue size any packet will see is only bucket size, hence delays are
+  bounded.
+
