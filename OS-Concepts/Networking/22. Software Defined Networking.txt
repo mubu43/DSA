@@ -1,0 +1,144 @@
+Software Defined Networking (SDN)
+====================================
+
+* To understand what's new about this trend of software defined
+  networks or SDN, let's see what traditional networking is:
+
+- Distributed state. The state about the network (connectivity, links)
+  and policy (which user should talk to whom, how to configure
+  firewalls, access control lists etc.) is distributed. This was a
+  conscious decision for scalability. No single node has a global view
+  of the network, or view of all name bindings (e.g., DNS to IP, IP to
+  MAC).
+
+- Integrated control and forwarding plane: routers do route
+  computation (control) as well as forward packets based on the
+  decisions made by the control plane (data plane).
+
+- Most networking is done in hardware (think switches, routers). Any
+  new networking functionality needed has to be built with hardware
+  support. For example, if you want to implement a new QoS scheduler,
+  you had to contact a switch vendor who had to build a custom ASIC
+  chip for the functionality. So, building new features was a hard
+  process, leading to slow change in networking protocols. 
+
+* In contrast, here is what software defined networking or SDNs mean
+  (at a high level).
+
+- Global visibility of the entire network state and name bindings in a
+  central location, called the controller. The control has all inputs
+  about the network, as well as what policy needs to be implemented
+  for all users.
+
+- Separation of control plane and forwarding plane. The controller,
+  which has a global view of the network, performs route computation
+  and pushes the forwarding tables to the switches. The forwarding
+  itself is done by the switches. 
+
+- The switches are fairly simple, and expose a common API. The
+  software controller can set the state in the switches to implement
+  any fancy idea. So all the innovation is happening in software in
+  the controller, and the switches are just implementing controller
+  instructions, not doing anything smart on their own.
+
+* SDNs is a major buzz word among researchers as well as in the
+  industry today. Very similar ideas were proposed many years in the
+  past as well. So what's the reason for all this buzz now? The
+  difference is that there are compelling use cases now.
+
+* The idea of SDNs started as a research project called
+  "Ethane". Ethane was envisioned as system to manage enterprise
+  networks (say, the network inside an organization like IITB), and
+  not as a replacement for any networking protocol globally.
+
+- Ethane says that all users, switches, and other network elements in
+  an enterprise should be managed by a central controller. The
+  controller has global visibility of all network connections, and
+  policy. For example, any switch that starts up will check in with
+  the controller. Every user will authenticate with the
+  controller. The controller knows all DNS and ARP bindings. The
+  controller manages DHCP and other such services also.
+
+- In addition to network state, policy is also centralized. In current
+  networks, policy is expressed as a bunch of firewall rules at
+  different locations, and over things like IP addresses which can
+  change. In Ethane, policy is specified at the controller, over high
+  level names.
+
+- The controller computes shortest paths based on global
+  knowledge. The controller also computes rules based on policy (e.g.,
+  firewall rules). Now, when the first packet of a flow starts, the
+  first switch that gets the packet doesn't know what to do with the
+  packet, so sends it to the controller. The controller computes the
+  shortest path, policy etc for that flow, installs this state in all
+  switches along the path, and returns the packet. All subsequent
+  packets of that flow will follow these rules. [Note that a
+  controller may choose not to set flow table rules and receive every
+  packet of that flow, for example, DHCP packets.]
+
+- Switches need not have complicated forwarding logic, just "flow
+  tables". That is, the switches match packets by some fields in
+  packet headers, and perform simple actions (forward along port X,
+  drop etc) for packets that match a certain flow. Switches also
+  maintain statistics about flows that the controller can use.
+
+- Ethane proposed a simple implementation, a policy language
+  etc. Ethane was a precursor to the latest wave of SDN research.
+
+* Once the basic ideas took hold, researchers wanted to standardize
+  this interface between the controller and switches. The main
+  motivation was that, if switches can expose a simple interface such
+  as flow tables, then researchers can try and test out various ideas
+  (like Ethane) in existing large campus networks. This led to the
+  definition of the "OpenFlow" protocol, and the concept of an
+  OpenFlow switch (a switch that understands openflow commands). An
+  OpenFlow switch recceives OpenFlow commands from controller and
+  configures its flow tables. A flow table has a pattern to match on
+  the packet headers (input port, VLAN ID, layer 2 and layer 3 source
+  and destination addresses, TCP or UDP ports, etc.). For packets that
+  match a certain header, some actions are taken (drop, forward on
+  certain port etc.). Flow tables can also maintain statistics about
+  how many packets matched a certain pattern. An openflow switch has a
+  secure communication channel with the controller to get instructions
+  on how to configure flow tables, and report statistics. By
+  standardizing this interface, one can use any switch that supports
+  openflow with any controller that speaks openflow.
+
+* The idea of OpenFlow was embraced by a few switch vendors
+  easily. There is also a lot of work on standardizing OpenFlow, and
+  several versions have come up. Later versions of OpenFlow match on
+  more header fields, and have more complicated actions associated
+  with them, (metering or rate limiting flows, pushing and popping
+  MPLS labels etc.) There can be a series of flow tables that are
+  checked in order, in order to express priority of rules.
+
+* Note that SDNs are not all about OpenFlow. OpenFlow is only protocol
+  that can be used to implement the idea of SDNs. Several such
+  standardized ways can and will exist to configure switches from
+  software.
+
+* Now, we come to the controller. Initially, the controller was just
+  one PC, it worked for small prototypes like Ethane. However,
+  researchers have worked on distributed controller frameworks, to
+  make the controller more scalable. 
+
+* What is an SDN controller? A controller maintains global state of
+  the network. It exposes this network state over its "northbound
+  API", so that applications can be built using this state to
+  configure the network. Once an application (e.g., a traffic
+  engineering algorithm) decides how the network should be configured,
+  a controller translates these instructions into OpenFlow commands on
+  its "southbound" interface, and configures the OpenFlow switches
+  accordingly. 
+
+* Now, all these ideas about SDN are only useful if there are good
+  applications that do things that were hard to do in hardware before,
+  but can be easily done using SDNs. While Ethane is one such example,
+  Google has also come up with a good use case for SDNs. Google has
+  built their WAN (wide area network) that connects several
+  datacenters using SDN concepts. They use SDNs to do very precise
+  traffic engineering and load balancing across their links.
+
+* In general, data centers and network virtualization open up a lot of
+  problems of managing a large number of physical servers or VMs
+  easily. The hope is that SDNs will make this management easier.

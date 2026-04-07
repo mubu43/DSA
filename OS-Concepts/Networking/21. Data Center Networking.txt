@@ -1,0 +1,131 @@
+Data center networking
+========================
+
+* Data Centers (DCs) are one of the hot things in the field of
+  computer systems. What are DCs? Large companies like Google / Apple
+  / Amazon / Microsoft store lots of data and run various computations
+  (e.g., computing search indices) over the data or host public
+  clouds. Even small/medium sized enterprises have need for
+  well-engineered DCs. The applications may be hosted on physical or
+  virtual machines. So, one of the networking problems in DC design
+  is: how to interconnect the various machines (i.e., how to place
+  switches / routers) such that the performance of the applications is
+  not bottlenecked by the network. This problem is particularly
+  interesting for applications that transfer lots of data, and are
+  bottlenecked by the network.
+
+* Typically, 20-40 servers are placed in a rack, and all connected to
+  a Top-of-Rack (ToR) switch. Several ToR switches connect to an
+  End-of-Row (EoR) switch. The switches are further connected by as
+  many levels as needed in a tree. At the top of the tree are core
+  switches. Below that the layers are named agrgegation, access, edge
+  etc., depending on how many levels exist. The topology is a mix of
+  L2 and L3, depending on number of servers and scalability
+  requirements.
+
+* What are the pros and cons of interconnecting servers at layer 2
+  vs. layer 3? Servers in DCs are often hosted on virtual machines
+  (VMs). The hypervisor or virtual machine mnager acts as a software
+  switch to connect the VMs to the physical network. DC operators may
+  want to move VMs around for various reasons (e.g., failure of
+  underlying physical machine). So, layer 3 IP addresses have to
+  change during migration. For this reason, layer 2 might be more
+  preferable, provided we deal with the scalability issues. In
+  general, there is a general need for systems that can specify
+  "virtual topologies" and the network takes care of mapping them to
+  physical network nodes. This problem, called "Network
+  Virtualization", is a new topic of research.
+
+* In network virtualization, we want to create a virtual network,
+  nodes, and links, without worrying about what the physical network
+  looks like. What is the motivation?  Currently, when you create a
+  network of VMs in a datacenter, the IP address of the VM is
+  restricted to the IP address subnet of the physical machine. The IP
+  addresses of multiple users must be coordinated. And a VM cannot
+  move to any physical machine outside its subnet. All these
+  retrictions make it hard to optimally work with VMs. Key idea to
+  network virtualization - tunnelling. Create virtual networks in a
+  separate IP space, assuming that no other networks exist. Then, when
+  a packet has to move from one virtual network element to another
+  over the physical network, simply tunnel to the next physical
+  node. So, the virtual network is built as an overlay over the
+  physical network.
+
+* What is some of the the other issues with such DCs? One is network
+  bottleneck. Switches higher up in the tree need to carry more
+  bandwidth, and have to be more powerful / expensive. So, simple
+  tree-based topologies are hard to scale. It is unlikely that any two
+  servers that are far away and need to go through the top layers of
+  switches will get to send/receive at their linerate, due ot
+  bottlenecks at the higher layer switches.
+
+* An alternative to such tree-based topology is what are called "fat
+  tree based topologies". Fat trees connect switches in such a way
+  that (a) any host can communicate with any other host at full
+  bandwidth, and (b) switches do not have to be more powerful /
+  expensive as you go higher up in the tree. That is, all switches at
+  all levels can be the same, commodity switches that are cheaply
+  available. Fat trees achieve this by providing lots of extra
+  switches at higher layers, lots of interconnections and paths
+  between switches.
+
+* [Draw figure of a normal tree and a fat tree, explain the
+  differences. Convince yourself that there are enough independent
+  paths in the fat tree from any source to any destination to enable
+  communication at the linerate. ]
+
+* Bisection bandwidth - if you bisect the network into two halves, the
+  bandwidth between the two halves is called bisection bandwidth. The
+  minimum value of bisection bandwidth for any possible bisection is
+  an interesting quantity. It determines the network bottleneck
+  bandwidth when several hosts are communicating with each other. The
+  bisection bandwidth of the fat tree does not reduce as you go up the
+  tree (as it does for a normal tree), so you can get communication at
+  linerate without any network bottlenecks.
+
+* Another problem of data centers: traffic engineering or network load
+  balancing: balancing load between several paths when multiple paths
+  exist in the network.  Layer 2 or layer 3 forwarding usually follows
+  one best path for each destination, even if other paths are
+  available and free. Traditionally, traffic engineering is done
+  offline using estimated traffic matrices (between every pair of
+  nodes), computing optimal paths offline, and pinning flows to paths
+  using MPLS. However, with fast changing traffic patterns, offline
+  traffic engineering may not work. For online traffic engineering,
+  OSPF ECMP (Equal Cost Multi Path) can take advantage of multiple
+  paths to a destination and split traffic among multiple paths. ECMP
+  works fine for the most part, except when there is large asymmetry
+  in the network traffic patterns / link capacities etc. For example,
+  when a large flow starts on one of the paths, equally splitting
+  traffic over all paths may not be the best idea.
+
+* Load balancing can also be centralized (done by one central node) or
+  distributed (complicated). Transport layer load balancing (e.g.,
+  multipath TCP) is also possible.
+
+* Now we move on to a different problem in datacenters:
+  application-layer load balancing. Consider a web server that has
+  advertised a certain public IP. In reality, we don't have one but
+  several servers in a server farm that appear as one server. All of
+  these servers have one virtual IP (VIP), and each replica has its
+  own Direct IP (DIP). An application-layer load balancer (LB)
+  intercepts traffic to VIP, rewrites the destination to be one of the
+  DIPs. Similarly, outgoing traffic from DIP should also be source
+  NATted to a VIP. The LB should try to equally split load amongst all
+  DIPs, and also ensure that a given flow gets mapped to the same DIP
+  every time.
+
+* Usually LBs are built in hardware because they need to process lots
+  of traffic. However, hardware LBs are expensive. There is some
+  recent research to build a software horizontally scalable load
+  balancer.
+
+* Understand the difference between vertical scaling (getting a more
+  powerful loadbalancer) vs horizontal scaling (adding more replicas
+  to increase capacity). Key to horizontal scaling: make state
+  management simple.
+
+* This is an example of another recent trend in networking: Network
+  Function Virtualization (NFV). Common network functions (load
+  balancing, firewalls etc) that are usually implemented in hardware
+  are now moving into software.
