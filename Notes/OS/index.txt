@@ -48,7 +48,7 @@
 	
 ---
 
-## Memory
+## Memory Management
 
 1. Introduction to virtual memory 
 	- mechanism of address translation
