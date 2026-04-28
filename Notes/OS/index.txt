@@ -1,0 +1,707 @@
+# OS Notes Index
+
+---
+
+## Process Management
+
+1. OS Intro
+	- What is an OS
+	- Fundamental OS concepts - Virtualization, Concurrency and Persistence
+	- What is a program, how does a C program code run on hardware, Role of OS in running a process
+	- Hardware organization, CPU instructions and CPU ISA
+	- Concurrent execution and CPU virtualization
+	- Memory image of a process, Address space of a process
+	- Isolation and privilege levels, User Mode and Kernel Mode
+	- System calls, interrupts, differences between both, interrupt handling
+	- I/O devices and device controller, device drivers
+	- Memory and Storage hierarchy
+	
+2. Process Abstraction
+	- What defines a process
+	- States of a process and transition between states
+	- PCB
+	- CPU Scheduler
+	- Boot process
+	
+3. System Calls for Process Management
+	- OS API for process management
+	- POSIX standard
+	- ABI
+	- syscall examples for process management - fork, exec, exit, wait
+	- Foreground and background execution
+	- I/O redirection and pipes
+	
+4. Process execution mechanisms (Trap handling and context switching)
+	- Concurrent mangagement of multiple processes by OS, Scheduler and context switching
+	- User mode vs Kernel Mode
+	- Function call vs System Call
+	- Switching securely to Kernel Mode OS code, Kernel Stack and IDT, Hardware trap instruction
+	- OS scheduler role in context switching
+	
+5. Scheduling Policies
+	- OS scheduler
+	- Preemptive vs Non-preemptive scheduler
+	- Timer interrupts
+	- Scheduling Policy Goals: Maximize utilization, Minimize completion/turnaround time, Minimize response time, Fairness, Low overhead of scheduling policy
+	- FIFO, SJF, SRTF, RR, WFQ, MLFQ; overview, pros cons of each
+	- Multi core scheduling considerations
+	
+---
+
+## Memory
+
+1. Introduction to virtual memory 
+	- mechanism of address translation
+	- segmentation
+	- paging
+
+2. Paging
+	- Paging overview
+	- Page table concept and structure
+	- Address translation using Paging (VPN -> PFN)
+	- Page table entry, Size of Page tables
+	- Address translation in MMU
+	- 2-level, 4-level page table examples of address translation
+	- Multi level page tables, inner page tables on demand
+	- Process Address Space, OS Address space and their mapping
+	- Page level isolation and security, example of page level protection using page tables
+	
+3. Demand Paging
+	- Demand Paging Overview
+	- Swap Space, Tracking Page in Swap Space
+	- Valid and Present bits in Page Table Entry
+	- Page Fault
+	- Reclaiming memory
+	- File-backed, anonymous and dirty pages
+	- Disk Access during page fault
+	- A detailed summary on what happens on memory access, {TLB-hit, page in memory}, {TLB-miss, page in memory}, {TLB-miss, page fault}
+	- Virtual memory and caches
+	- Thrashing
+	- Page Replacement Policies - Optimal, FIFO, LRU, LRU implementation 
+	
+4. Memory Allocation and Free Space Management
+	- Overview of memory allocation syscalls and what happens internally for increasing address space of a process
+	- mmap, munmap
+	- memory mapping, initialization and usage of anonymous, file-backed page, malloc and standard library utilities for memory allocation
+	- Types of memory allocators - general purpose and fixed-size allocators, the difference and use-cases
+	- General Purpose(variable memory allocation) - how to use large block of memory to satisy variable-sized memory allocation requests, tracking info about variable sized chunks, which are allocated/free, fragmentation 
+		* Refer to OCU project memconfig.txt and how ngp::mempool uses it, it's a very relevant real-life use-case case-study!
+		- Free list data structure to keep track of free chunks
+		- Splitting and coalescing
+		- Which free chunk to pick in malloc? First fit, Best fit, Worst fit
+		- Headers, embedded free list
+		- example in detail(OCU project NGP mempool is a good case study for this; refer to NGP code and memconfig.txt)
+		- segregated free lists and slab allocators
+		- buddy allocators for easy coalescing
+	
+---
+
+## Concurrency
+
+1. Introduction to threads and concurrency
+	- Concurrency vs Parallelism
+	- POSIX threads
+	- Thread Scheduling overview
+	- Shared Data Access
+	- Race conditions and critical sections and the need for mutual exclusion
+	
+2. Locks
+	- Overview of locking and using locks
+	- Goals of a lock, how to implement a lock
+	- an example of incorrect lock implementation using a *is_locked* variable, that may work for one case but fails for another
+	- Hardware Atomic Instructions; their need and why they are useful
+		- test-and-set HW atomic instruction, lock implementation using test-and-set
+		- Compare-And-Swap(CAS) hardware atomic instruction, Lock using CAS
+	- Evaluating Spin-Lock implementations - Correctness, Fairness, Performance
+	- Spin Lock vs. Sleeping Mutex
+	- Guidelines for using locks
+	
+3. Condition Variables
+	- wait and signal mechanism for thread synchronization; naive solutions vs CVs
+	- Overview of CVs (pthread based)
+	- Atomicity in wait and signal; missed wake-up problem; using a mutex to protect atomicity of sleeping
+	- Guidelines for using CVs
+	- Producer-Consumer problem demonstration; eg. of multi threaded server where master thread accepts client connections and worker threads pick up descriptors from buffers filled by master, then service client req
+		- Solution to Producer-Consumer problem with CVs; eg. with 2 CVs
+	- Batched processing problem demonstration; solution with 2 CVs; one for req to wait another for batch processor to wait
+		- Batched processing problem -  Nth request thread calls wait before invoking signal to wake up batch processor; Batch processor never wakes up, all threads will sleep forever
+	- Synchronization patterns using CVs
+	- How to write code with correct synchronization
+		-  Identify when each entity should wait
+		- For each wait, figure out how the signaling will happen
+		- Ensure that signaling path in the code is not blocked in any way, e.g., signal others first before calling wait and going to sleep
+		- Update all extra variables (counts, flags) in the solution correctly
+		- Watch out for deadlocks!
+		
+4. Semaphores
+	- Semaphore overview
+	- Using semaphore as a lock(Binary Semaphore)
+	- Semaphore synchronization examples	
+		- T1->T2
+		- T1 and T2 wait for each other (both threads having to run 2 steps and we want both of them to complete the first step before moving to the second step); Example of deadlock with such a problem
+	- Recap of Producer-Consumer problem with CVs
+	- Producer-Consumer using semaphores
+		- One semaphore “sem_empty” is initialized to N, indicates number of empty slots in buffer available for producers to use
+			• Producer does down every time it produces an item
+			• Once all slots are filled, down operation blocks
+			• Sleeping producer woken up by consumer that calls “up” after consuming
+	- Another semaphore “sem_filled” is initialized to 0, indicates number of filled slots in buffer that are ready to be consumed
+		• Easier solution than CV, no need to keep separate counter
+	- Producer-Consumer using semaphores: Deadlock
+		• With condition variables, lock given to sleep/wait is released after the thread is safely put to sleep
+		• No such concept of releasing any locks with semaphores
+		• With semaphore, if you do down with another binary semaphore/lock held, the lock will not be released on its own
+	- Guidelines for using sempahore
+	- Batched processing examples with semaphores
+	
+5. Concurrency Bugs
+	- Overview of bugs in concurrent programs; non-deterministic nature of bugs
+	- Non-deadlock bugs
+	- atomicity bug with an example, 
+		- solution - locks for mutual exclusion
+	- Order violation bug example
+		- fix with CVs
+	- Deadlock Bugs
+		- example 
+		- when could deadlock occur
+		- Conditions for deadlock
+			- Mutual exclusions, hold and wait, No pre-emption, circular wait; all conditions must hold for a deadlock to occur
+	- Preventing circular wait
+		- acquire locks in a certain fixed order
+		- Total ordering(or partial ordering on related locks) must be followed (eg. order locks by address of lock variable or some other condition)
+	- Preventing hold and wait
+		- Order all locks at once, say, by acquiring a master lock first
+		- downside is reduction in concurrent execution and performance
+	- Deadlock avoidance
+		-  if OS knew which process needs which locks, it can schedule the processes in that deadlock will not occur. Banker's algo is very popular but impractical
+		- Detect and recover: reboot system or kill deadlocked process
+		
+---
+
+## I/O and File Systems
+
+1. I/O subsystem
+	
+	- Overview of I/O devices from OS perspective
+	- Simple Device Model, block devices, character devices
+	- Canonical Device Model, device exposing an interface of memory registers - 1. Current status of device, 2. Command to execute 3. Data to transfer
+	- Device controller manages device, internals of device usually hidden
+	- How does OS read/write to device registers?
+		- Device controller and Device driver overview
+		- OS read/write of registers in the I/O device via:
+			- Explicit I/O instructions (eg. in, out on x86 privileged instructions)
+			- Memory mapped I/O (Device makes registers appear like memory locations,  OS simply reads and writes from memory. Memory hardware routes accesses to these special memory addresses to devices)
+	- A simple execution of I/O requests eg. read/write block of data from disk
+		• Give command to device via command register
+		• Write: transfer data to device via data register
+		• Poll status register to see if I/O operation completes
+		• Read: Copy data from data register to main memory after I/O completes
+		- Polling status to see if device ready constantly – wastes CPU cycles
+	- Interrupts
+		- Polling wastes CPU cycles. Instead, OS can put process to sleep and switch to another process. When I/O request completes, device raises interrupt, OS can switch back to original process after that request has completed(Note: context switch to original process need not be immediate)
+	- Interrupt Handler
+		-  Interrupt from I/O device causes trap, switches process to kernel mode. Interrupt Descriptor Table (IDT) stores pointers (value of PC) to OS interrupt handlers (interrupt service routines)
+		-  Interrupt (IRQ) number identifies the interrupt handler to run for a device
+		-  Interrupt handler processes notification from device, unblocks the process waiting for I/O (if any), and starts next I/O request (if any pending)
+		-  Handling interrupts imposes kernel mode transition overheads( Note: polling may be faster than interrupts if device is fast)
+	- DMA
+		- In spite of interrupts, CPU cycles wasted in copying data to/from device
+		- Instead, a special piece of hardware (DMA engine) copies from main memory to device and vice versa, without involving CPU
+			- CPU gives DMA engine the memory location of data
+			- In case of disk read, device copies data via DMA to RAM and then raises interrupt
+			- In case of write, device copies data via DMA from RAM and then starts writing
+	- Summary of disk read with interrupt + DMA
+		• Process P1 makes read system call to read data from disk
+		• OS gives command to disk via command register
+		• OS switches to another process P2 (P1 cannot run anymore, blocked)• Disk completes reading data, copies data into main memory directly
+		via DMA, then raises interrupt
+		• OS handles interrupts, disk data is ready, marks P1 as ready to run• Interrupt handled in the kernel mode of P2
+		• OS scheduler switches back to P1 at a later time
+	- I/O stack in the kernel
+		- Device driver: part of OS code that talks to specific device, gives commands, handles interrupts etc.  Rest of OS code abstracts out the device-specific details
+		- I/O subsystems (file system / networking) built as layers: system calls, block read/write, device drivers that communicates with I/O device
+		
+2. Files and Directories
+
+	- File System Overview
+		- An organization of files and directories on disk. An OS can implement one or more file systems
+		- Disks expose a set of blocks (usually 512 bytes)
+		- File system organizes files onto blocks. System calls translated into reads and writes on blocks
+	- File abstraction
+		- File: sequence of bytes, stored persistently on disk
+		- Directory: container for files and other sub-directories
+		- Filesystem: OS subsystem that stores files and directories persistently on secondary storage like hard disks
+			- File-related system calls are exposed to users to access files
+			• Steps to access a file
+				• Open a file using system call, get a file descriptor
+				• File descriptor is a handle to refer to file for read/write
+				• Close file when done accessing it
+	- Directory tree:  Files and directories arranged in a tree, starting with root(/)
+	- Read/Write syscalls
+	- Read and write system calls update the offset into a file
+		• After reading N bytes, next read will return the next set of bytes
+		• Can also update the offset from which to read/write using a seek system call
+		• Every open file descriptor will read/write file as independent stream, with
+		independent offsets
+	- Every process has array of file descriptors. Opening sockets and pipes also returns file descriptor. Serves as a handle for stream of data from socket or pipe
+		• One file descriptor for every open file / socket / pipe
+		• First 3 entries are streams for stdin, stdout, stderr
+	- Every file is identified by a unique inode number in filesystem
+	- Directories overview
+		- Directory is a special file that contains mappings between filenames and inode number of the file
+		- Directories can also be accessed like files, e.g., create, open, read, close
+	- Hard Links
+		• Hard linking creates another file that pointd to the same inode number (and hence, same underlying data)
+		• If one file deleted, file data can be accessed through the other links
+		• Inode maintains a link count, file data deleted only when no further links to it
+		• You can only unlink, OS decides when to delete
+	- Soft/Symbolic link
+		- Soft link is a file that simply stores a pointer to another filename
+		- If the main file is deleted, then the link points to an invalid entry: dangling reference
+	- Mounting a file system: overview.  Mounting a file system connects the files to a specific point in the directory tree. (mount command examples)
+	 
+3. File Systems
+	- inode overview and in-depth
+	- example of a simple file system
+	- Directories and inodes
+	- Pathnames
+	- In-memory data structures
+		- File descriptor array
+		- Open file table
+		- in-memory inode table
+	- Open file table in detail
+	- File system data structures after multiple syscalls to same fd, after fork(), dup2 and redirection
+	- Disk buffer cache in detail
+		- write-through cache (synchronous write)
+		- write-back cache (asynchronous write)
+	- file system Read syscall
+		• Input is file descriptor, user memory to read into, number of bytes to read• Use file descriptor array index, access open file table entry, then inode
+		• Based on offset, identify which data block(s) of file to read using inode information• Check if file data block(s) present in disk buffer cache
+		• If cache miss, device driver issues read command to hard disk, process is moved to blocked state, OS will context switch to another process
+		• When read completes, device controller will DMA the block(s) into an empty buffer in disk buffer cache, raises interrupt • OS handles interrupt, marks process as ready to run, scheduler will switch to process in future• Copy requested number of bytes from data block(s) in disk buffer cache into userprovided memory buffer
+		• User code resumes, system call returns number of bytes actually read, or error • Actual bytes may be less than requested, e.g., end of file
+	- file system write syscall
+		• Input is file descriptor, user memory buffer containing data to be written,
+	number of bytes to write
+		• Using file descriptor and inode, identify which data block(s) of file to write into• If we are writing beyond end of file, file size expands, new blocks needed
+		• Allocate new data blocks for file on disk (update free list or bitmap) • Add new data block numbers into file inode
+		• Locate data block(s) present in disk buffer cache
+		• If not, read data block(s) into buffer cache first
+		• Copy requested number of bytes from user memory buffer into data block(s) cached in disk buffer cache, cached block is now marked “dirty”
+		• Write-through cache: synchronously write to disk immediately
+		• Write-back cache: asynchronously update disk copy later
+		• User code resumes (after delay in case of sync write, immediately for async write), system call returns number of bytes actually written, or error
+	- memory mapping a file in detail
+	- mmap vs read/write syscalls
+	- Crash consistency
+		• Every system call updates multiple disk blocks • Example: when we append data to a file, we change data block, inode block, bitmap, ..
+		• All changes to disk blocks are first made in memory (disk buffer cache), then
+		written to disk (synchronously or asynchronously) • Even metadata blocks (inode) are updated first in disk buffer cache
+		• If power failure happens in the middle of a system call, memory changes will be
+		lost, disk can be only partially updated, may cause inconsistency in file data• Example: new data block written to disk, but not added to inode (written data is lost) • Example: new data block number added to inode, but data block contents not written (file
+		contains garbage data)
+		• Crash consistency: how to ensure filesystem is consistent after a power failure?• Problem exists even with write-through disk buffer cache, but more prominent with writeback cache
+	- Filesystem checkers
+	- Logging/journalling
+		• Logging/journaling: common technique for atomicity in systems
+		• Can be applied to guarantee crash consistency in file systems also
+		• How to add logging to any file system?
+		• All changes to be made to disk blocks are first written to a log on disk, original disk blocks are not touched
+		• After all changes are logged to disk, special commit entry written to log• Next, changes are applied to the original disk blocks, log entries cleared• If crash happens before log is committed, then no changes are made to any
+		disk block, it is as if system call never happened
+		• If crash happens after log is committed, but before changes applied to original disk blocks, then log is replayed upon reboot and changes are completed
+	- Virtual File System
+		• Different file systems can have different implementations of system calls• A file system using logging/journaling may write to log first
+		• A different directory implementation (fixed size records vs linked list) will lead to a different lookup function
+		• How to write filesystem code in a modular manner?
+		• Should be easy to change system call implementations and switch filesystems• Solution: Virtual File System (VFS)
+		• Defines a set of objects (files, directories, inodes) and operations to be performed on these objects (open a file, lookup filename in directory, ..) for various system calls• A specific filesystem implements these functions on VFS objects, provides pointers to the functions to be invoked by OS
+		• OS filesystem code is built in layers for modularity: VFS, filesystem implementation, disk buffer cache, device driver
+	- Data storage on disk
+		Interface: a set of 512-byte blocks (sectors), that can be read or written atomically
+		• Bits stored on disk with some error
+		detection/correction bits – Correct random bit flips – Detect corruption of data
+		• Disk controller or OS can handle some errors
+		(e.g., blacklisting certain sectors)
+		• If errors cannot be masked, user perceives harddisk failures
+		• Technologies such as RAID (Redundant Array of
+		Inexpensive Disks) provide high reliability and
+		performance by replicating across multiple disks.
+	 
+---
+
+## Network I/O
+
+1. Concurrent Network I/O
+	• What if server is connected to multiple clients?
+	• Multiple sockets to manage: listen socket, per-client connected sockets
+	• Accept on listen socket, read/recv on connected socket can block until data arrives• If server process blocks on one socket, it can neglect other sockets
+	• How to concurrently handle multiple clients?
+	• Server process can create multiple child processes/threads, one per connected client• Main server process blocks at accept on listen socket
+	• Child processes/threads can block at reading from connected client sockets
+	• New client connections as well as existing client communication handled• Processes/threads multiplexed on same core, or run in parallel on different cores
+	• Cannot support very large number of clients due to limit on number of
+	processes or threads a system can support
+	
+2. Event driven I/O
+	• Event-driven or asynchronous I/O API used to concurrently handle I/O from multiple sockets in a single process
+	• Example: select, epoll
+	• Overview of epoll API
+	• Process creates an epoll instance, adds file descriptors of interest to be monitored• Process blocks on epoll_wait, which returns when there is an event on any of the
+	socket file descriptors (OS takes care of monitoring all fds)
+	• When epoll_wait returns, process handles events by performing suitable actions
+	(accept, recv etc.) on the ready file descriptors, and calls epoll_wait when done• Single-threaded process enough to handle I/O from multiple concurrent clients• Process should not do any blocking action when handling event
+	• Event-driven APIs available for network I/O, not popular for disk
+	
+3. Network Architecture
+
+	• Most components in a computer system need to do some network I/O,
+	sometimes as clients and sometimes as servers
+	• Web server receives requests from users, contacts database, returns response• Programming language libraries may provide better APIs for network I/O than the basic socket API discussed here
+	• Example: remote procedure call (RPC) APIs invoke server code like function calls• With any API, design choice to be made between two architectures
+	• One thread per connection, blocking/synchronous API
+	• Fewer threads, event-driven/asynchronous API
+	• Event-driven APIs usually have lesser overhead and higher performance, but harder to program, difficult to scale to multiple core
+	
+4. Network I/O Subsystem
+- What happens at the sender and receiver end host kernel network stack?
+		- Device Drivers
+			• Device driver manages interaction between NIC (network interface card) and software
+			• Configures NIC via memory mapped I/O(MMIO)
+			• NIC performs Direct Memory Access (DMA) of network packets into kernel memory
+			• NIC raises interrupt to indicate reception of packets
+		- Interrupt Handling
+			• Network device drivers handle interrupts from NICs
+		- Network Interrupt Handling
+			• Interrupt handling from NIC involves lot of work
+			• Processing information about the network, congestion control, …• To avoid excessive disruption to interrupted process, NIC interrupt
+			handling split into two parts
+			• Top half interrupt handler acknowledges interrupt, does minimal
+			processing
+			• Top half schedules a kernel process for full interrupt handling, called
+			bottom half interrupt handler
+			• Bottom half processes the packet and delivers the packet to userspace
+			- Top half interrupt handler
+				• NIC and kernel exchange information about packets via TX/RX “rings”
+				• RX ring: circular array containing pointers to received packets
+				• NIC does DMA, updates pointer in RX ring, interrupts
+				• Top half does minimal processing, schedules bottom half
+			- Bottom half interrupt handler
+				• Bottom half or ksoftirq process scheduled when CPU is free
+				• Processes all packets collected in the RX ring since the last round
+					• Allocates socket buffer (sk_buff) structure for each packet
+					• Socket buffer contains pointer to different fields (headers) in the packet
+				• Interrupt + ksoftirq can run on multiple cores
+			- Network Layer processing
+				• Bottom half interrupt handler performs all the network processing• Parsing and checking packet headers in sk_buff structure
+				• IP routing, TCP reliability and congestion control algorithms
+			- Packet copy to sockets
+				• Packet headers (port number) used to map received packet to socket
+				• On read from application, packet payload copied from kernel memory to user memory
+			- The problem of interrupts
+				• At high loads interrupts are generated continuously
+				• Each interrupt signals the same thing: there are packets to process• Leads to excessive interrupt overhead and high CPU/system load• Naïve solution: Run ksoftirq (bottom half) in busy loop – busypollingtrades off CPU cycles for higher throughput and lower latency
+			- NAPI polling
+			- Overheads of the Linux network stack
+				• Interrupt handling, transition across user and kernel mode
+				• Context switching from application to ksoftirq
+				• Packet copy from kernel to user space
+			- Need for alternate fast network I/O tchniques; Fast I/O techniques
+				- Generic Kernel Networking Stack
+				- Kernel Bypass(DPDK) Get packets directly into user space application
+				- In-Kernel Program Offload (eBPF) Push some extra application functionality into the kernel
+			- Kernel Bypass with DPDK
+				• Poll mode driver in userspace, kernel driver is just passthrough
+				• Polls device, fetches and processes batches of packets
+				• Packet buffers in user space pre-allocated buffers, huge pages
+				• Pros: Minimal involvement of kernel, high packet processing rates
+				• Cons: kernel tools don’t work anymore, hard to co-exist with other apps
+			- In-kernel packet processing with eBPF
+				• eBPF (extended Berkeley Packet Filter) is a way to embed custom packet processing code in the kernel safely at specific hook points
+				• Let’s take example of XDP hook present in NIC driver to understand its working
+				• Runs custom code inside NIC driver for each packet when napi polling is done
+				• No sk_buff and copies required for XDP
+			- eBPF internals
+				• The program should be written using eBPF ISA
+				• bpf() system call is used to load the eBPF program
+				• Problems with this setup:
+					1. Byte code is hard to write
+					2. User program can be unsafe
+					3. Byte code interpretation is slow
+			- eBPF internals – clang + llvm
+				• The program should be written
+				using eBPF ISA
+				• bpf() system call is used to load
+				the eBPF program
+				• Problems with this setup:
+				2. User program can be unsafe
+				3. Byte code interpretation is slow
+			- eBPF internals – the ebpf verifier
+				• The program should be written
+				using eBPF ISA
+				• bpf() system call is used to load
+				the eBPF program
+				• Problems with this setup:
+					3.  Byte code interpretation is slow
+			eBPF internals – JIT compilatioin
+				• The program should be written
+				using eBPF ISA
+				• bpf() system call is used to load
+				the eBPF program
+			- What can an eBPF program do at XDP?
+				• The custom code processes packets at
+				returns a verdict:
+				• XDP_PASS: Pass the packet to network stack
+				• XDP_DROP: Drop the packet
+				• XDP_TX: Transmit the packet ASAP
+				• etc.
+				• Use cases:
+				High performance firewalls, load balancers,
+				key-value stores, etc.
+				• Problems:
+				Difficult to write, no heap, limited program
+				size, difficult to buffer packets, etc.
+			- Kernel bypass with AF_XDP
+				• Regular sockets (AF_INET) receive
+				packets after TCP/IP processing
+				• AF_XDP is special type of socket that can
+				receive packets directly from XDP hook
+				• Packet DMA directly into user space (with
+				driver support), no extra copy, no kernel
+				stack processing overhead
+				• Program at XDP hook notifies user space app
+				via poll/interrupt mechanisms
+				• Higher throughputs possible, while
+				allowing kernel some control
+
+			- eBPF, XDP, AF_XDP – the connection
+				• eBPF programs can be safely
+				embedded inside specific hook
+				points to add custom
+				functionality to kernel network
+				stack
+				• eBPF program at XDP hook can
+				also redirect packets to AF_XDP
+				sockets for processing inside
+				userspace application
+			- Another problem: memory access bottleneck
+				• Memory wall: DRAM speeds have not increased as much as CPU or
+				network hardware
+				• On high speed network links, only few nanoseconds budget per
+				packet, but accessing main memory takes hundreds of nanosec
+			- Direct Cache Access / DDIO
+				• Direct Cache Access (Intel’s DDIO): NIC writes packet directly into CPU caches, and does not DMA into main memory
+				• User/kernel software can access packet quickly from cache
+				• Leads to much faster network packet processing
+---
+
+## Performance Engineering
+
+- How to improve system capacity?
+	• When system is running at capacity or saturation, some hardware resource at bottleneck is fully (100%) utilized
+	• E.g., all CPU cores are fully busy with no spare CPU cycles
+	• E.g., hard disk is running at full capacity performing reads/writes
+	• How to improve capacity?
+	• Increase hardware resources at bottleneck component
+	• Or, optimize system to use hardware resources more efficiently
+	• Sometimes, bottleneck due to software issues only (no hardware resource is fully utilized)
+	• E.g., maximum number of file descriptors opened by process, cannot open any more• E.g., threads wasting time waiting for locks, even though CPU is free
+	• E.g., not enough threads to do the work, even though cores are free
+	• Such issues can be fixed by rewriting code or tuning system parameters
+	
+- Monitoring usage of hardware resources
+	• At saturation, performance of bottleneck component cannot increase further because some hardware resource is fully utilized
+	• Monitor usage of all hardware resources using various tools:
+	• Tools to monitor CPU utilization, what fraction of CPU cycles in each CPU core are fully utilized and by which processes, e.g., “top” in Linux.
+	• Tools to monitor memory usage, what fraction of main memory is free and what fraction is used by user/kernel, e.g., “free” in Linux
+	• Tools to monitor memory bandwidth usage, how much of the memory bus bandwidth is utilized by ongoing memory accesses, for local and NUMA memory
+	• Tools to monitor utilization of various I/O devices like disk and network card, and rate of data transfer to/from device, e.g., “iostat” in Linux
+	• Once we identify which hardware resource is saturated, identify why the hardware resource is being used so heavily: profiling tools
+	
+- Profiling tools
+	• Performance profiling software (e.g., perf, oprofile) help us identify the
+	root cause of performance issues
+	• Profilers monitor the execution of a program and help to:
+	• Count various hardware events (e.g., cache misses) and software events (e.g., page
+	faults) occurring in the system
+	• Attribute events to parts of program code responsible for events
+	• Understand how CPU time is spent in executing various user/system functions• Understand how various hardware resources are utilized
+	• By analyzing profiler output, we can identify
+	• Parts of code that are performing inefficiently
+	• Hardware or software events that contribute to poor performance
+	• Profiling is a starting point for performance optimization
+
+- Optimizing CPU performance
+	• If all CPU cores are saturated by application, identify which parts of the code are leading to high CPU usage via profiling, and optimize
+		• If user functions/libraries using more CPU than required, optimize/rewrite the code to be more efficient, or use high-performance libraries
+	• If excessive CPU usage by kernel code, optimize where possible, e.g.,
+		• High CPU usage due to frequent interrupt handling with high speed network card  move to a more optimized device driver which generates fewer
+		interrupts or split interrupt processing to multiple CPU cores
+		• Upgrade to better file systems to reduce file I/O overhead
+		• Tune CPU scheduler parameters to minimize context switching overhead
+
+- Using multiple cores better
+	• Having multiple threads helps utilize multiple cores better, in most cases• However, threads cannot execute in parallel all the times
+	• Example: only one thread at a time can execute critical section
+	• Amdahl’s law: estimate performance gains due to parallelism• Let T1 = time required to perform a task on one CPU core
+	• Let Tp = time required to perform task when running in parallel on “p” cores• Let α = fraction of task that can be parallelized
+	• We have Tp = (α * T1 / p) + (1- α) * T1
+	• Speedup due to using multiple cores = T1/Tp (ideally p if α=1)
+	• For large values of p, speedup approx. 1/(1- α)
+	• If α is small, speedup is small, poor multicore scalability
+	• Minimize code that cannot be parallelized, for better multicore scaling
+
+- Optimizing memory/cache usage
+	• If memory usage too high, system performance may be sub-optimal due to thrashing (too many page faults, excessive swapping to disk)• Reduce memory foot-print of application, so avoid swapping
+	• Improve locality of reference within program, so that working set size (amount of memory being actively used) is low
+	• Using huge pages (larger page size) improves TLB hit rates
+	• If poor cache hit rates and high memory bandwidth utilization(even though memory is free) CPU wasted in waiting for memory access
+	• Write code in a way that optimizes cache usage, and reduces need to fetch data from main memory
+	
+* Important Concept: Cache lines (Need to build visualization of this!)
+	
+- CPU caches
+	• CPU fetches instructions/data from memory of process
+	• Faster memory access implies faster application performance
+	• First step in a memory access: check CPU caches if data is present
+	• CPU caches store recently accessed memory in 64 byte cache lines
+	• Uses locality of reference to avoid expensive main memory access
+	• Multiple levels of cache, some private, some common across cores
+	• Memory location is cached in the private cache of one core C0, another core C1 also wishes to access the same memory contents cache line is shared across cores via cache coherence mechanism
+	• Cache coherence protocol ensures consistent view of memory across cores
+	• But cache coherence mechanisms add overhead to memory access
+
+- Optimizing cache usage (1)
+	• Align data structures to cache lines using language library primitives or compiler hints
+	• Store frequently accessed variables together in the same 64 byte cache line
+	• Write code with lower working set size (frequently accessed code sections or data structures) that fits in CPU caches
+	• Write code to increase locality of reference (access data that is already in cache as far as possible)
+	• Example: access matrix along rows rather than along columns
+	• Example: merge two for-loops that loop over same array
+
+- Optimizing cache usage (2)
+	• When accessing data from multiple cores, avoid cross-core cache coherence traffic to make cache access faster
+	• Threads of program running on separate cores should access data in separate cache lines as far as possible
+	• True sharing: two threads read same memory address from separate cores
+	• False sharing: two threads read separate memory addresses, but both locations are on the same cache line
+	• Both cause cache line to bounce across cores, false sharing to be avoided
+	• Avoid shared data and lock contention between threads as far as possible
+	• Shared lock variable accessed from multiple cores, cache line bounces across cores• Use newer techniques (optimized locks, lockfree data structures)
+
+- More on optimizing memory
+	• DRAM allows random access of memory (jump to any address), but sequential access of memory is better for performance
+	• CPU prefetcher predicts which memory will be accessed next (estimates stride length of access) and fetches it into cache
+	• Pre-allocation of memory is better than dynamic allocation via malloc
+	• General purpose malloc that does variable sized allocation can be slow
+	• Custom memory allocators better than general purpose allocators• Slab allocators are better when malloc is in a few fixed sizes
+	• Store data in memory-mapped anonymous pages instead of heap
+	• Avoid copying memory contents unnecessarily
+	• Memory mapping a file avoids copying file data from kernel memory to user buffers
+
+- Other optimizations (beyond CPU, memory)
+	• Compiler optimization turned on, to enable generation of optimized binary application code
+	• Advanced techniques used to generate efficient machine code in compilers
+	• Some parts of application code can be offloaded to hardware accelerators to run quicker
+	• Graphics Processing Units (GPUs) are used to run video processing and rendering algorithms efficiently
+	• When I/O is bottleneck, consider caching result of I/O in storage that can be accessed faster, for future use
+	• If nothing else works, add more hardware resources to increase performance and handle incoming load
+	• Vertical scaling: add more hardware resources to the bottleneck machine• Horizontal scaling: add additional machines to handle extra load
+	
+- Software bottlenecks
+	• Sometimes, system performance bottleneck is not hardware
+	• Adding more resources will not help fix the problem
+	• How to identify such cases?
+	• Throughput flattens out even when no resource is fully utilized
+	• Performance does not increase by adding more resources
+	• Software bottlenecks harder to identify, fixed by carefully tuning system parameters
+	• Example: process hits maximum limit on file descriptors, so cannot handle new requests even though there are enough resources
+	• Other parameters: number of threads, queue sizes
+
+- Optimum number of threads in thread pool
+	• Consider a multithreaded server with a thread pool of workers
+	• Master thread places new clients/requests in shared queue
+	• Worker threads in thread pool retrieve requests one by one and process• Worker thread can block multiple times to service one client
+	• Too low number of worker threads cannot efficiently use CPU cores
+	• Min no. of threads in thread pool to fully utilize a single CPU?
+	• Suppose each worker thread performs 0.01 seconds of computation on CPU to process client request (service demand) and 1 second waiting for I/O before running on CPU again (turnaround time)
+	• Optimum number of threads = turnaround time / service demand = 100• What if fewer than 100 threads? 50 threads will lead to 50% CPU utili, but still throughput flattens out
+
+- Sizing buffers, queues in system
+	• Many buffers in a system, e.g., buffer to hold requests between threads in
+	a pipeline, buffer to hold incoming data from I/O devices
+		• Essential to handle bursts of data coming into system
+		• If buffer size too low, threads/processes may not have enough work
+	• Little’s law (famous queueing theory formula): N = R * W, where
+		• N = expected number of requests being served in the system
+		• R = rate of arrival of requests
+		• W = average time spent by a request in the system (time to process request + time
+		spent waiting in various queues)
+	• Very general principle, useful in many scenarios
+		• Requests arrive at 100 req/s, each worker thread takes 2 seconds for processing a
+		request, then we need a buffer of at least 200 requests between master and worker
+		• What if buffer size < 200? Some requests have to be dropped while all threads are
+		busy, threads may not have work when they are free
+
+- Network I/O architecture
+	• Most components in a computer system need to do some network I/O,
+	sometimes as clients and sometimes as servers
+	• Web server receives requests from users, contacts database, returns response• Programming language libraries may provide better APIs for network I/O than the basic socket API discussed here
+	• Example: remote procedure call (RPC) APIs invoke server code like function calls• With any API, design choice to be made between two architectures
+	• One thread per connection, blocking/synchronous API
+	• Fewer threads, event-driven/asynchronous API
+	• Event-driven APIs usually have lesser overhead and higher performance, but harder to program, difficult to scale to multiple cores
+
+- Throughput vs response time
+	• Response time of the system is sum of time spent at each component
+	• Time at each component is service demand (processing time) + queueing
+	delay (waiting time)
+	• Throughput of the entire system is determined by service demand of
+	slowest component (bottleneck)
+	• Service demands of non-bottleneck components impact response time• What if you optimize and reduce service demand of a non-bottleneck
+	component? Throughput may not change, but response time will improve• Most performance engineering starts with optimizing the bottleneck
+	• Once the slowest component is optimized, bottleneck shifts elsewhere!
+	• Performance engineering is an iterative process
+
+
+- The performance engineering workflow• Build a multi-tier system based on functional requirements
+	• Perform a load test, identify capacity and bottleneck component
+	• If hardware bottleneck, try to optimize hardware resource usage
+	• If software bottleneck, tune system parameters (threads, buffers, …)
+	• If bottleneck capacity improves, overall system performance is better, bottleneck may shift elsewhere
+	• Repeat the process until satisfied with overall system performance• Other ways to improve system performance: scaling (adding more
+	replicas of a component), caching, …
+	• What beyond performance engineering? Reliability, fault tolerance
+---
+
+## Virtualization
+
+- What is the cloud?
+- Why run applications on cloud and not on “bare metal” servers?
+- Hypervisor overview
+- How a hypervisor allows multiple VMs to run on a physical machine, in great technical detail
+	- Trap and emulate VMM
+	- Problems with trap and emulate 
+	- Popek Goldberg theorem
+- Techniques to virtualize x86 (1)
+		• Paravirtualization: rewrite guest OS code to be virtualizable
+			• Guest OS won’t invoke privileged operations, makes “hypercalls” to VMM
+			• Needs OS source code changes, cannot work with unmodified OS
+			• Example: Xen hypervisor
+		• Full virtualization: CPU instructions of guest OS are translated to be virtualizable
+			• Sensitive instructions translated to trap to VMM
+			• Dynamic (on the fly) binary translation, so works with unmodified OS
+			• Higher overhead than paravirtualization
+			• Example: VMWare workstation
+Techniques to virtualize x86 (2)
+	• Hardware assisted virtualization: KVM/QEMU in Linux
+		• CPU has a special VMX mode of execution
+		• X86 has 4 rings on non-VMX root mode, another 4 rings in VMX mode
+	• VMM enters VMX mode to run guest OS in (special) ring 0
+	• Exit back to VMM on triggers (VMM retains control)
+
+- Containers overview
+- How are containers different from VMs
+- How containers work from an OS internals point of view, in great technical depth
+- Need for, benefits of and use-cases of container orchestration
+
+---
